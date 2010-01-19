@@ -42,7 +42,7 @@ class HasMachineTagsTest < Test::Unit::TestCase
   
   context "InstanceMethods" do
     before(:each) { @taggable = TaggableModel.new }
-  
+    
     test "creates all tags" do
       tags = ['some', 'tag:name=blah']
       @taggable.tag_list = tags
@@ -67,6 +67,13 @@ class HasMachineTagsTest < Test::Unit::TestCase
       @taggable.save!
       @taggable.taggings.size.should == 1
       @taggable.tags.map(&:name).should == ['bling4']
+    end
+    
+    test "validation" do
+      @taggable.tag_list = "bling=5"
+      @taggable.valid?.should == false
+      @taggable.errors.count.should == 1
+      @taggable.save.should == false
     end
   end
 end
