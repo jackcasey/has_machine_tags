@@ -37,7 +37,15 @@ module HasMachineTags
 
       conditions = []
       conditions << sanitize_sql(options.delete(:conditions)) if options[:conditions]
-      tag_sql = condition_from_tags(tags)
+      if options.delete(:exclude)
+        options.delete(:match_all)
+        #tags_conditions = tags.map { |t| sanitize_sql(["#{Tag.table_name}.name = ?", t]) }.join(" OR ")
+        tags_conditions = condition_from_tags(tags, true)
+        tag_sql = sanitize_sql(["#{table_name}.id NOT IN (SELECT #{Tagging.table_name}.taggable_id FROM #{Tagging.table_name} LEFT OUTER JOIN #{Tag.table_name} ON #{Tagging.table_name}.tag_id = #{Tag.table_name}.id WHERE (#{tags_conditions}) AND #{Tagging.table_name}.taggable_type = #{quote_value(base_class.name)})", tags])
+      else
+        tag_sql = condition_from_tags(tags)
+      end
+      
       conditions << tag_sql
       
       if options.delete(:match_all)
@@ -64,15 +72,18 @@ module HasMachineTags
       return opts
     end
     
-    def condition_from_tags(tags)
+    def condition_from_tags(tags, internal_query=false)
+      talias = tags_alias
+      talias = "tags" if internal_query
+      
       tag_sql = tags.map {|t|
         if match = Tag.match_wildcard_machine_tag(t)
           string = match.map {|k,v|
-            sanitize_sql(["#{tags_alias}.#{k} = ?", v])
+            sanitize_sql(["#{talias}.#{k} = ?", v])
           }.join(" AND ")
           "(#{string})"
         else
-          sanitize_sql(["#{tags_alias}.name = ?", t])
+          sanitize_sql(["#{talias}.name = ?", t])
         end
       }.join(" OR ")
     end

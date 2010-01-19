@@ -103,7 +103,71 @@ class HasMachineTags::FinderTest < Test::Unit::TestCase
         
       end
       
-      test "match_all option with (normal tags)" do
+      test "exclude option (normal tags)" do
+        @ruby = TaggableModel.create(:tag_list=>"red, clear, precious")
+        @garnet = TaggableModel.create(:tag_list=>"red, clear")
+        @sapphire = TaggableModel.create(:tag_list=>"blue, clear")
+        @brick = TaggableModel.create(:tag_list=>"red, solid")
+        
+        results = TaggableModel.tagged_with(["red"], :exclude => true)
+        results.to_a.size.should == 1
+        results.include?(@sapphire).should be(true)
+        
+        results = TaggableModel.tagged_with(["red", "clear"], :exclude => true)
+        results.to_a.size.should == 0
+        
+        results = TaggableModel.tagged_with(["solid"], :exclude => true)
+        results.to_a.size.should == 3
+        results.include?(@ruby).should be(true)
+        results.include?(@sapphire).should be(true)
+        results.include?(@garnet).should be(true)
+      end
+      
+      test "exclude option (machine tags)" do
+        add_minerals
+        
+        results = TaggableModel.tagged_with(["testing:color=red", "testing:opacity=high"], :exclude => true)
+        results.to_a.size.should == 1
+        results.include?(@sapphire).should be(true)
+        
+        results = TaggableModel.tagged_with(["testing:color=blue", "testing:opacity=high"], :exclude => true)
+        results.to_a.size.should == 2
+        results.include?(@ruby).should be(true)
+        results.include?(@garnet).should be(true)
+        
+        results = TaggableModel.tagged_with(["testing:precious=no", "testing:lustre=6", "properties:hardness=2"], :exclude => true)
+        results.to_a.size.should == 1
+        results.include?(@ruby).should be(true)
+        
+        results = TaggableModel.tagged_with(["testing:color=red", "testing:color=blue"], :exclude => true)
+        results.to_a.size.should == 0
+      end
+      
+      test "exclude option (machine tags, wildcards)" do
+        add_minerals
+        
+        results = TaggableModel.tagged_with(["color="], :exclude => true)
+        results.to_a.size.should == 0
+        
+        results = TaggableModel.tagged_with(["precious=", "lustre="], :exclude => true)
+        results.to_a.size.should == 1
+        results.include?(@brick).should be(true)
+        
+        results = TaggableModel.tagged_with(["=no", "=2", "properties:hardness=2"], :exclude => true)
+        results.to_a.size.should == 2
+        results.include?(@ruby).should be(true)
+        results.include?(@sapphire).should be(true)
+        
+        results = TaggableModel.tagged_with(["properties:", "lustre=", "=low"], :exclude => true)
+        results.to_a.size.should == 0
+        
+        results = TaggableModel.tagged_with(["properties:", "lustre="], :exclude => true)
+        results.to_a.size.should == 1
+        results.include?(@garnet).should be(true)
+        
+      end
+      
+      test "match_all option (normal tags)" do
         @ruby = TaggableModel.create(:tag_list=>"red, clear, precious")
         @garnet = TaggableModel.create(:tag_list=>"red, clear")
         @sapphire = TaggableModel.create(:tag_list=>"blue, clear")
