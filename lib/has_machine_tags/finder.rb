@@ -23,12 +23,45 @@ module HasMachineTags
     
     # :stopdoc:
     def find_options_for_tagged_with(tags, options = {})
+      
       tags = TagList.new(tags)
+      
       return {} if tags.empty?
+      machine_tag_used = false
+      
+      tags.each do |x|
+        if x =~ /[=:]+/
+          machine_tag_used = true
+        end
+      end
+
       conditions = []
       conditions << sanitize_sql(options.delete(:conditions)) if options[:conditions]
-      conditions << condition_from_tags(tags)
-      default_find_options_for_tagged_with.update(:conditions=>conditions.join(" AND ")).update(options)
+      tag_sql = condition_from_tags(tags)
+      conditions << tag_sql
+      
+      if options.delete(:match_all)
+        group = "#{taggings_alias}.taggable_id HAVING COUNT(#{taggings_alias}.taggable_id) = "
+        if machine_tag_used
+          #Since a machine tag matches multiple tags per given tag, we need to dynamically calculate the count
+          #TODO: this select needs to return differently for each taggable_id
+          #group += "(SELECT count(id) FROM #{Tag.table_name} #{tags_alias} WHERE #{tag_sql})"
+          group += tags.size.to_s
+        else
+          group += tags.size.to_s
+        end
+      end
+      if group
+#        if machine_tag_used or true
+#          puts
+#          puts "TAG_SQL: \"#{tag_sql}\""
+#          puts "GROUP_SQL: \"#{group}\""
+#        end
+        opts = default_find_options_for_tagged_with.update(:conditions=>conditions.join(" AND "), :group => group).update(options)
+      else
+        opts = default_find_options_for_tagged_with.update(:conditions=>conditions.join(" AND ")).update(options)
+      end
+      return opts
     end
     
     def condition_from_tags(tags)
