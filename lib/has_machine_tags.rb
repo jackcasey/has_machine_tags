@@ -22,6 +22,8 @@ module HasMachineTags
         has_many :tags, :through=>:taggings
         after_save :save_tags
         
+        validate :is_valid
+        
         include HasMachineTags::InstanceMethods
         extend HasMachineTags::Finder
         include HasMachineTags::Console::InstanceMethods if options[:console]
@@ -78,6 +80,15 @@ module HasMachineTags
       new_tags = tag_list - (self.tags || []).map(&:name)
       new_tags.each do |t|
         self.tags << Tag.find_or_initialize_by_name(t)
+      end
+    end
+  
+    def is_valid
+      new_tags = tag_list - (self.tags || []).map(&:name)
+      new_tags.each do |x| 
+        if Tag.find_or_initialize_by_name(x).invalid?
+          errors.add(:tag_list, "'#{x}' is an invalid tag.")
+        end
       end
     end
     #:startdoc:
