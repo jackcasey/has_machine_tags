@@ -72,7 +72,7 @@ module HasMachineTags
     VALUE_DELIMITER = '='
 
     def self.included(base) #:nodoc:
-      name_format = /\A(([^\*\=\:\.,]+)|(#{NAMESPACE_REGEX}\:#{PREDICATE_REGEX}\=#{VALUE_REGEX}))\Z/
+      name_format = /\A(([^\*\=\:\.,]+)|((#{NAMESPACE_REGEX}\:)?#{PREDICATE_REGEX}\=#{VALUE_REGEX}))\Z/
       base.class_eval %[
         has_many :taggings
   

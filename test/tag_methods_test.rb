@@ -102,7 +102,7 @@ class HasMachineTags::TagMethodsTest < Test::Unit::TestCase
   end
 
   test "invalidates name when invalid characters present" do
-    %w{some.tag another:tag so=invalid yet,another whoop*}.each do |e|
+    %w{some.tag another:tag yet,another whoop*}.each do |e|
       Tag.new(:name=>e).valid?.should be(false)
     end
   end

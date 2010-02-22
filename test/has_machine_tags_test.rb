@@ -71,9 +71,9 @@ class HasMachineTagsTest < Test::Unit::TestCase
     
     test "validation" do
       @taggable.tag_list = "bling=5"
-      @taggable.valid?.should == false
-      @taggable.errors.count.should == 1
-      @taggable.save.should == false
+      @taggable.valid?.should == true
+      @taggable.errors.count.should == 0
+      @taggable.save.should == true
     end
   end
 end
