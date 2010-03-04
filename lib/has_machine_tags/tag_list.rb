@@ -34,7 +34,15 @@ module HasMachineTags
             (@options[:default_predicate] ? Tag.build_machine_tag(namespace, @options[:default_predicate].call(e, namespace), e) :
             Tag.build_machine_tag(namespace, default_predicate, e))
           }
-        else
+        elsif e.include?(Tag::VALUE_DELIMITER)
+          namespace = nil
+          remainder = e
+          remainder.split(QUICK_MODE_DELIMITER).map {|e| 
+            e.include?(Tag::VALUE_DELIMITER) ? "#{e}" :
+            (@options[:default_predicate] ? Tag.build_machine_tag(namespace, @options[:default_predicate].call(e, namespace), e) :
+            Tag.build_machine_tag(namespace, default_predicate, e))
+          }
+        else 
           e
         end
       }.flatten
@@ -55,7 +63,9 @@ module HasMachineTags
     # Converts tag_list to a stringified version of quick_mode.
     def to_quick_mode_string
       machine_tags = namespace_hashes.map {|namespace, predicate_values|
-        "#{namespace}:" + predicate_values.map {|pred, value|
+        n = ""
+        n = "#{namespace}:" unless namespace.blank?
+        n + predicate_values.map {|pred, value|
           pred == self.default_predicate ? value : "#{pred}#{Tag::VALUE_DELIMITER}#{value}"
         }.join(QUICK_MODE_DELIMITER)
       }

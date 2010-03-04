@@ -102,7 +102,8 @@ module HasMachineTags
       
       # Builds a machine tag string given namespace, predicate and value.
       def build_machine_tag(namespace, predicate, value)
-        "#{namespace}:#{predicate}=#{value}"
+        return "#{namespace}:#{predicate}=#{value}" unless namespace.blank?
+        return "#{predicate}=#{value}"
       end
       
       # Returns an array of machine tag parts: [namespace, predicate, value]
@@ -116,7 +117,9 @@ module HasMachineTags
       end
       
       def extract_from_name(tag_name) #:nodoc:
-        (tag_name =~ /^(#{NAMESPACE_REGEX})\:(#{PREDICATE_REGEX})\=(#{VALUE_REGEX})$/) ? [$1, $2, $3] : nil
+        result = (tag_name =~ /^(#{NAMESPACE_REGEX}\:)?(#{PREDICATE_REGEX})\=(#{VALUE_REGEX})$/) ? [$1, $2, $3] : nil
+        result[0].chomp!(":") unless result == nil or result[0] == nil
+        result
       end
 
       # Valid wildcards with their equivalent shortcuts

@@ -87,7 +87,7 @@ module HasMachineTags
       new_tags = tag_list - (self.tags || []).map(&:name)
       new_tags.each do |x| 
         if Tag.find_or_initialize_by_name(x).invalid?
-          errors.add(:tag_list, "'#{x}' is an invalid tag.")
+          errors.add(:tag_list, "contains an invalid tag: '#{x}'.")
         end
       end
     end
